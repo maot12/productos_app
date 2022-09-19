@@ -1,18 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:productos_app/providers/login_form_provider.dart';
 import 'package:productos_app/screens/screens.dart';
+import 'package:productos_app/services/auth_service.dart';
 import 'package:productos_app/widgets/widgets.dart';
-import 'package:productos_app/services/services.dart';
 
 import '../ui/input_decoration.dart';
 
 import 'package:provider/provider.dart';
 
-class LoginScreen extends StatelessWidget {
+class RegisterScreen extends StatelessWidget {
 
-  static String routeName = 'login';
+  static String routeName = 'register';
 
-  const LoginScreen({Key? key}) : super(key: key);
+  const RegisterScreen({Key? key}) : super(key: key);
 
     @override
     Widget build(BuildContext context) {
@@ -26,7 +26,7 @@ class LoginScreen extends StatelessWidget {
                       child: Column(
                         children: [
                           const SizedBox(height: 10,),
-                          Text('Login', style: Theme.of(context).textTheme.headline4,),
+                          Text('Crear Cuenta', style: Theme.of(context).textTheme.headline4,),
                           const SizedBox(height: 30,),
                           ChangeNotifierProvider(
                             create: (_) => LoginFormProvider(),
@@ -37,19 +37,20 @@ class LoginScreen extends StatelessWidget {
                     ),
                     const SizedBox(height: 50,),
                     TextButton(
-                        onPressed: () => Navigator.pushReplacementNamed(context, RegisterScreen.routeName),
-                        style: ButtonStyle(
+                      onPressed: () => Navigator.pushReplacementNamed(context, LoginScreen.routeName),
+                      style: ButtonStyle(
                           overlayColor: MaterialStateProperty.all(Colors.indigo.withOpacity(0.1)),
                           shape: MaterialStateProperty.all(const StadiumBorder())
-                        ),
-                        child: const Text(
-                          'Crear una nueva cuenta',
-                          style: TextStyle(
+                      ),
+                      child: const Text(
+                        '¿Ya tienes una cuenta?',
+                        style: TextStyle(
                             fontSize: 18,
                             color: Colors.black87
-                          ),
                         ),
+                      ),
                     ),
+
                     const SizedBox(height: 200,),
                   ],
                 ),
@@ -113,25 +114,24 @@ class _LoginForm extends StatelessWidget {
             elevation: 0,
             color: Colors.deepPurple,
             onPressed: loginForm.isLoading ? null : () async {
+                FocusScope.of(context).unfocus();
+                final authService = Provider.of<AuthService>(context, listen: false);
 
-              FocusScope.of(context).unfocus();
-              final authService = Provider.of<AuthService>(context, listen: false);
+                if(!loginForm.isValidForm()) return;
 
-              if(!loginForm.isValidForm()) return;
+                loginForm.isLoading = true;
 
-              loginForm.isLoading = true;
+                //await Future.delayed(const Duration(seconds: 2));
 
-              //await Future.delayed(const Duration(seconds: 2));
+               final String? errorMessage = await authService.createUser(loginForm.email, loginForm.password);
 
-              final String? errorMessage = await authService.login(loginForm.email, loginForm.password);
+               if(errorMessage== null) {
+                 Navigator.pushReplacementNamed(context, HomeScreen.routeName);
 
-              if(errorMessage== null) {
-                Navigator.pushReplacementNamed(context, HomeScreen.routeName);
-
-              } else {
-                NotificationsService.showSnackBar('Email no encontrado');
-                loginForm.isLoading = false;
-              }
+               } else {
+                 print(errorMessage);
+                 loginForm.isLoading = false;
+               }
             },
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 80, vertical: 15),
